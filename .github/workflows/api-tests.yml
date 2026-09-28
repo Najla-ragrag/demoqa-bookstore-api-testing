@@ -1,4 +1,33 @@
+name: API Tests
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
+
+jobs:
+  newman:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman and HTML reporter
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Run collection
+        run: |
+          newman run "My Collection.postman_collection.json" \
+            -e "Testing environment.postman_environment.json" \
+            -r cli,htmlextra \
+            --reporter-htmlextra-export report.html
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: report.html
