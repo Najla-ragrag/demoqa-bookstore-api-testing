@@ -10,6 +10,26 @@
   "item": [
     {
       "name": "Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response has userID\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response).to.have.property(\"userID\");\r\n    pm.expect(response.userID).to.be.a(\"string\");\r\n});\r\n\r\npm.test(\"Username matches request\", function () {\r\n    pm.expect(pm.response.json().username).to.eql(pm.environment.get(\"user name\"));\r\n});\r\n\r\nif (pm.response.code === 201) {\r\n    pm.environment.set(\"userID\", pm.response.json().userID);\r\n}"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"user name\", \"qa_tester_\" + Date.now());"
+            ]
+          }
+        }
+      ],
       "request": {
         "auth": {
           "type": "noauth"
@@ -18,10 +38,10 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"userName\": \"qa_tester_2026\",\r\n  \"password\": \"Test@12345\"\r\n}",
+          "raw": "{\r\n  \"userName\": \"{{user name}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
           "options": {
             "raw": {
-              "language": "text"
+              "language": "json"
             }
           }
         },
@@ -49,7 +69,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "const response = pm.response.json();\r\npm.environment.set(\"token\", response.token);\r\nconsole.log(\"Token saved: \", response.token);\r\n"
+              "const response = pm.response.json();\r\npm.environment.set(\"token\", response.token);\r\nconsole.log(\"Token saved: \", response.token);\r\npm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response has a valid token\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response).to.have.property(\"token\");\r\n    pm.expect(response.token).to.be.a(\"string\").and.not.empty;\r\n});\r\n\r\npm.test(\"Status field is Success\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.status).to.eql(\"Success\");\r\n});"
             ]
           }
         }
@@ -59,7 +79,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"userName\": \"qa_tester_2026_v2\",\r\n  \"password\": \"Test@12345\"\r\n}",
+          "raw": "{\r\n  \"userName\": \"{{user name}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -84,28 +104,108 @@
     },
     {
       "name": "POST - Authorized Check",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "console.log(\"القيمة الحقيقية المخزنة:\", pm.environment.get(\"user name\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response is true\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response).to.eql(true);\r\n});"
+            ]
+          }
+        }
+      ],
       "request": {
-        "method": "GET",
+        "method": "POST",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"userName\": \"{{user name}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": ""
+          "raw": "https://demoqa.com/Account/v1/Authorized",
+          "protocol": "https",
+          "host": [
+            "demoqa",
+            "com"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "Authorized"
+          ]
         }
       },
       "response": []
     },
     {
       "name": "GET All Books",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response has books array\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response).to.have.property(\"books\");\r\n    pm.expect(response.books).to.be.an(\"array\");\r\n});\r\n\r\npm.test(\"Books array is not empty\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.books.length).to.be.above(0);\r\n});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": ""
+          "raw": "https://demoqa.com/BookStore/v1/Books",
+          "protocol": "https",
+          "host": [
+            "demoqa",
+            "com"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books"
+          ]
         }
       },
       "response": []
     },
     {
       "name": "POST - Add Book to Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Book added with correct ISBN\", function () {\r\n    const response = pm.response.json();\r\n    const expectedIsbn = pm.environment.get(\"isbn\");\r\n    pm.expect(response.books).to.be.an(\"array\");\r\n    pm.expect(response.books[0].isbn).to.eql(expectedIsbn);\r\n});\r\n\r\npm.test(\"Authorization header was required\", function () {\r\n    pm.expect(pm.request.headers.has(\"Authorization\")).to.be.true;\r\n});"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -141,6 +241,17 @@
     },
     {
       "name": "GET - Verify User Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Book exists in user's collection\", function () {\r\n    const response = pm.response.json();\r\n    const expectedIsbn = pm.environment.get(\"isbn\");\r\n    const found = response.books.some(book => book.isbn === expectedIsbn);\r\n    pm.expect(found).to.be.true;\r\n});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [
@@ -168,6 +279,17 @@
     },
     {
       "name": "DELETE - Remove Book from Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {\r\n    pm.response.to.have.status(204);\r\n});\r\n\r\npm.test(\"Response body is empty\", function () {\r\n    pm.expect(pm.response.text()).to.eql(\"\");\r\n});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "DELETE",
         "header": [
@@ -176,6 +298,15 @@
             "value": "Bearer {{token}}"
           }
         ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"isbn\": \"{{isbn}}\", \"userId\": \"{{userID}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
           "raw": "https://demoqa.com/BookStore/v1/Book",
           "protocol": "https",
@@ -194,31 +325,27 @@
     },
     {
       "name": "DELETE - Remove User Account",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": ""
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Register_V2",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"userName\": \"qa_tester_2026_v2\",\r\n  \"password\": \"Test@12345\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {\r\n    pm.response.to.have.status(204);\r\n});\r\n\r\npm.test(\"Response body is empty\", function () {\r\n    pm.expect(pm.response.text()).to.eql(\"\");\r\n});"
+            ]
           }
-        },
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
         "url": {
-          "raw": "https://demoqa.com/Account/v1/User",
+          "raw": "https://demoqa.com/Account/v1/User/{{userID}}",
           "protocol": "https",
           "host": [
             "demoqa",
@@ -227,7 +354,8 @@
           "path": [
             "Account",
             "v1",
-            "User"
+            "User",
+            "{{userID}}"
           ]
         }
       },
