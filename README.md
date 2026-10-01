@@ -1,14 +1,16 @@
-# DemoQA Bookstore API — Manual & Scripted Test Collection
+# DemoQA Bookstore API — Automated Test Suite with CI/CD
 
-A complete, hands-on API testing project built with **Postman**, covering the full lifecycle of the [DemoQA Bookstore API](https://demoqa.com/swagger/): user registration, token-based authentication, and CRUD operations on a protected book collection.
+A complete API testing project built with **Postman + Newman + GitHub Actions**, covering the full lifecycle of the [DemoQA Bookstore API](https://demoqa.com/swagger/): user registration, token-based authentication, and CRUD operations on a protected book collection — running automatically on every push.
 
 ## Overview
 
-This project demonstrates end-to-end functional and negative testing of a REST API that uses Bearer Token authentication. It includes an 8-step test flow, environment-based variable management, and a pre-request/post-response script that automates token extraction — removing manual copy-paste and the errors that come with it.
+This project demonstrates end-to-end functional and negative testing of a REST API that uses Bearer Token authentication, taken from manual exploration through to a fully automated CI/CD pipeline. It includes an 8-step test flow, 20 assertions, dynamic test-data generation (no hardcoded users), and a GitHub Actions workflow that runs the whole suite headlessly on every commit.
 
 ## Tech Stack
 
-- **Tool:** Postman (Collections, Environments, Scripts, Console)
+- **Testing:** Postman (Collections, Environments, Scripts, Console)
+- **Automation/CLI:** Newman + newman-reporter-htmlextra
+- **CI/CD:** GitHub Actions (Ubuntu runner, Node.js 20)
 - **API under test:** `demoqa.com` — Account & BookStore REST API
 - **Auth type:** Bearer Token (JWT)
 
@@ -25,35 +27,66 @@ This project demonstrates end-to-end functional and negative testing of a REST A
 | 7 | Remove Book | DELETE | `/BookStore/v1/Book` | 204 No Content |
 | 8 | Remove User Account | DELETE | `/Account/v1/User/{userId}` | 204 No Content — clean teardown |
 
+**20/20 assertions passing** across all 8 requests, run automatically per commit.
+
+## CI/CD Pipeline
+
+A GitHub Actions workflow (`.github/workflows/api-tests.yml`) runs the full suite on every push to `main`:
+
+1. Checks out the repo and sets up Node.js
+2. Installs Newman + the HTML reporter
+3. Runs the collection headlessly against the exported environment
+4. Uploads an HTML test report as a build artifact
+
+Because the `Register` step generates a unique username per run (`qa_tester_<timestamp>`), the whole suite is **idempotent** — it can run any number of times without manual cleanup or "user already exists" failures.
+
 ## Key Findings & Debugging Notes
 
-Real issues encountered and resolved during this project (documented here to show root-cause analysis, not just execution):
+Real issues encountered and resolved during this project, documented here to show root-cause analysis rather than just execution:
 
-1. **Case-sensitive variable mismatch** — Referencing `{{userId}}` in a request body while the environment variable was actually named `userID` caused a `1207 — User Id not correct!` error. Postman treats variable names as case-sensitive; a naming convention was adopted across the collection to prevent recurrence.
-2. **Local Vault inaccessible on web client** — Automatically "securing" the token via Postman's Secret Scanner moved it into **Local Vault** storage, which is only accessible from the Postman Desktop App/Agent. On the browser client this caused the Authorization header to resolve empty, producing a `1200 — User not authorized!` error despite a valid token. Fix: kept the token as a plain (non-vault) environment variable and automated its refresh via script instead.
-3. **Manual token copy-paste risk** — Long JWTs wrapped across multiple lines in the response viewer are error-prone to copy by hand. Solved by adding a post-response script to extract and persist the token automatically (see below).
+1. **Case-sensitive variable mismatch** — Referencing `{{userId}}` while the environment variable was actually named `userID` caused a `1207 — User Id not correct!` error. A consistent naming convention was adopted to prevent recurrence.
+2. **Local Vault inaccessible on the web client** — Auto-securing the token via Postman's Secret Scanner moved it into Local Vault storage, which only resolves through the Desktop App/Agent. On the browser client this silently produced an empty Authorization header. Fixed by keeping auth values as plain environment variables and refreshing them via script instead.
+3. **Environment export stripped all values** — A Postman export from a session with an unresolved sync conflict produced a `.postman_environment.json` where every variable's `"value"` field was blank, causing the CI run to fail with `password required` even though the UI displayed the values correctly. Fixed by hand-writing the environment file with explicit values rather than trusting the Export button in that state.
+4. **YAML indentation broke the workflow trigger** — An extra level of indentation under `on:` merged `push` into `workflow_dispatch`, producing `No event triggers defined in on`. Fixed by aligning both keys at the same level.
+5. **Hardcoded test user broke repeat runs** — The original collection used a fixed username, so any CI re-run failed with `406 — User Exists!`. Fixed with a pre-request script that generates a unique username per run from `Date.now()`.
 
-## Automation Highlight — Post-response Script
+## Automation Highlights
 
-Added to the `GenerateToken` request to eliminate manual copy-paste of the auth token:
+**Dynamic user registration** (Register → Pre-request Script):
+```javascript
+pm.environment.set("user name", "qa_tester_" + Date.now());
+```
 
+**Automatic token capture** (GenerateToken → Post-response Script):
 ```javascript
 const response = pm.response.json();
 pm.environment.set("token", response.token);
-console.log("Token saved:", response.token);
 ```
 
 ## How to Use This Collection
 
-1. Import `DemoQA-Bookstore-API.postman_collection.json` into Postman.
-2. Import `Testing-environment.postman_environment.json` and select it as the active environment.
-3. Run requests in order (1 → 8). Each step depends on variables (`userID`, `token`, `isbn`) set automatically by earlier steps.
+**In Postman:**
+1. Import `My Collection.postman_collection.json`.
+2. Import `Testing environment.postman_environment.json` and select it as the active environment.
+3. Run requests in order (1 → 8), or use Collection Runner to execute all 8 at once.
+
+**From the command line (Newman):**
+```bash
+npm install -g newman newman-reporter-htmlextra
+newman run "My Collection.postman_collection.json" \
+  -e "Testing environment.postman_environment.json" \
+  -r cli,htmlextra --reporter-htmlextra-export report.html
+```
+
+**Via CI:** push to `main`, or trigger manually from the **Actions** tab (`workflow_dispatch`).
 
 ## Skills Demonstrated
 
 - Manual & functional REST API testing (GET/POST/DELETE)
-- Bearer Token authentication flow testing
+- Bearer Token authentication flow testing, including negative/error paths
 - Environment & variable management in Postman
-- Pre/post-response scripting (JavaScript) for automation
-- Root-cause debugging of tooling and environment issues
+- Pre/post-response scripting (JavaScript) for automation and dynamic test data
+- CLI test automation with Newman
+- CI/CD pipeline configuration with GitHub Actions (YAML)
+- Root-cause debugging of tooling, environment, and pipeline issues
 - Test documentation with reproducible steps and evidence
