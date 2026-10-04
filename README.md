@@ -1,10 +1,16 @@
 # DemoQA Bookstore API — Automated Test Suite with CI/CD
 
-A complete API testing project built with **Postman + Newman + GitHub Actions**, covering the full lifecycle of the [DemoQA Bookstore API](https://demoqa.com/swagger/): user registration, token-based authentication, and CRUD operations on a protected book collection — running automatically on every push.
+A complete API testing project built with **Postman + Newman + GitHub Actions**, covering the full lifecycle of the [DemoQA Bookstore API](https://demoqa.com/swagger/): user registration, token-based authentication, and CRUD operations on a protected book collection — plus a dedicated set of negative tests — running automatically on every push.
 
 ## Overview
 
-This project demonstrates end-to-end functional and negative testing of a REST API that uses Bearer Token authentication, taken from manual exploration through to a fully automated CI/CD pipeline. It includes an 8-step test flow, 20 assertions, dynamic test-data generation (no hardcoded users), and a GitHub Actions workflow that runs the whole suite headlessly on every commit.
+This project demonstrates end-to-end functional and negative testing of a REST API that uses Bearer Token authentication, taken from manual exploration through to a fully automated CI/CD pipeline. It includes an 8-step positive flow (20 assertions), a 6-request **Negative Tests** folder (13 assertions), dynamic test-data generation (no hardcoded users for the main flow), and a GitHub Actions workflow that runs the whole suite headlessly on every commit.
+
+| Suite | Requests | Assertions |
+|-------|----------|-----------|
+| Positive flow | 8 | 20 / 20 passing |
+| Negative tests | 6 | 13 / 13 passing |
+| **Total** | **14** | **33 / 33 passing** |
 
 ## Tech Stack
 
@@ -15,6 +21,8 @@ This project demonstrates end-to-end functional and negative testing of a REST A
 - **Auth type:** Bearer Token (JWT)
 
 ## Test Flow & Coverage
+
+### Positive flow
 
 | # | Request | Method | Endpoint | Expected Result |
 |---|---------|--------|----------|------------------|
@@ -29,9 +37,29 @@ This project demonstrates end-to-end functional and negative testing of a REST A
 
 **20/20 assertions passing** across all 8 requests, run automatically per commit.
 
+### Negative tests
+
+A separate **Negative Tests** folder verifies that the API rejects invalid input and unauthorized access with the correct errors.
+
+| # | Scenario | What it verifies |
+|---|----------|------------------|
+| 1 | Register with a weak password | Password-complexity rules are enforced; user is not created |
+| 2 | Register a duplicate user | Existing username is rejected (`User exists!`) |
+| 3 | Generate token with wrong password | Authentication fails and no token is issued |
+| 4 | Add a book with an invalid ISBN | Non-existent ISBN is rejected; collection is unchanged |
+| 5 | Request without Authorization header | Protected endpoint refuses access (`User not authorized!`) |
+| 6 | Remove a book not in the user's collection | API returns an error instead of silently succeeding |
+
+**13/13 assertions passing** across the 6 negative requests.
+
+**Design notes**
+- The duplicate-user test relies on a dedicated fixture account that is registered once and never re-registered or deleted, so the scenario stays repeatable.
+- Positive-flow users are generated dynamically per run, so the two suites never collide.
+- Negative tests run in the same Newman/GitHub Actions pipeline as the positive flow.
+
 ## CI/CD Pipeline
 
-A GitHub Actions workflow (`.github/workflows/api-tests.yml`) runs the full suite on every push to `main`:
+A GitHub Actions workflow (`.github/workflows/api-tests.yml`) runs the full suite (positive + negative) on every push to `main`:
 
 1. Checks out the repo and sets up Node.js
 2. Installs Newman + the HTML reporter
@@ -68,7 +96,7 @@ pm.environment.set("token", response.token);
 **In Postman:**
 1. Import `My Collection.postman_collection.json`.
 2. Import `Testing environment.postman_environment.json` and select it as the active environment.
-3. Run requests in order (1 → 8), or use Collection Runner to execute all 8 at once.
+3. Run the positive flow in order (1 → 8), then the **Negative Tests** folder — or use Collection Runner to execute everything at once.
 
 **From the command line (Newman):**
 ```bash
@@ -83,9 +111,11 @@ newman run "My Collection.postman_collection.json" \
 ## Skills Demonstrated
 
 - Manual & functional REST API testing (GET/POST/DELETE)
-- Bearer Token authentication flow testing, including negative/error paths
+- Positive and negative test design: input validation, duplicate handling, invalid credentials, missing/invalid authorization, invalid resource references
+- Bearer Token authentication flow testing, including error paths
 - Environment & variable management in Postman
 - Pre/post-response scripting (JavaScript) for automation and dynamic test data
+- Test-data management (dynamic users plus a stable fixture account)
 - CLI test automation with Newman
 - CI/CD pipeline configuration with GitHub Actions (YAML)
 - Root-cause debugging of tooling, environment, and pipeline issues
