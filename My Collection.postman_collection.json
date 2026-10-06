@@ -9,6 +9,302 @@
   },
   "item": [
     {
+      "name": "Negative Tests",
+      "item": [
+        {
+          "name": "POST - Register Fixture User (Setup)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"qa_duplicate_fixturee\",\r\n  \"password\": \"Fixed@Pass123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/Account/v1/User",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "Account",
+                "v1",
+                "User"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Register Duplicate User (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 406\", function () {\r\n    pm.response.to.have.status(406);\r\n});\r\n\r\npm.test(\"Error message is User Exists\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.message).to.eql(\"User exists!\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"qa_duplicate_fixturee\",\r\n  \"password\": \"Fixed@Pass123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/Account/v1/User",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "Account",
+                "v1",
+                "User"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GenerateToken Wrong Password (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 (not 401)\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Status field is Failed\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.status).to.eql(\"Failed\");\r\n});\r\n\r\npm.test(\"Token is null\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.token).to.be.null;\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"qa_duplicate_fixturee\",\r\n  \"password\": \"WrongPassword123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/Account/v1/GenerateToken",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "Account",
+                "v1",
+                "GenerateToken"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Book Invalid ISBN (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Error mentions ISBN not found\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.message).to.include(\"ISBN\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userId\": \"{{userID}}\",\r\n  \"collectionOfIsbns\": [\r\n    { \"isbn\": \"9999999999999\" }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/BookStore/v1/Books",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "BookStore",
+                "v1",
+                "Books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Add Book No Auth (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {\r\n    pm.response.to.have.status(401);\r\n});\r\n\r\npm.test(\"Error message indicates unauthorized\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.message).to.include(\"not authorized\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userId\": \"{{userID}}\",\r\n  \"collectionOfIsbns\": [\r\n    { \"isbn\": \"{{isbn}}\" }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/BookStore/v1/Books",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "BookStore",
+                "v1",
+                "Books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Remove Book Not In Collection (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Error mentions ISBN not in collection\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.message).to.include(\"ISBN\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"isbn\": \"9781449331818\",\r\n  \"userId\": \"{{userID}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/BookStore/v1/Book",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "BookStore",
+                "v1",
+                "Book"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Weak Password (Data-Driven)",
+      "item": [
+        {
+          "name": "Register Weak Password (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "   const testCase = pm.iterationData.get(\"case\") || \"single run\";\r\n   const expected = pm.iterationData.get(\"expected_status\") || 400;\r\n\r\n   pm.test(`[${testCase}] status is ${expected}`, function () {\r\n       pm.expect(pm.response.code).to.eql(expected);\r\n   });\r\n\r\n   pm.test(`[${testCase}] error message mentions password rules`, function () {\r\n       const body = pm.response.json();\r\n       pm.expect(body.message).to.include(\"Password\");\r\n   });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"userName\": \"qa_weak_pw_test\",\r\n  \"password\":\"{{weak_password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://demoqa.com/Account/v1/User",
+              "protocol": "https",
+              "host": [
+                "demoqa",
+                "com"
+              ],
+              "path": [
+                "Account",
+                "v1",
+                "User"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Register",
       "event": [
         {
@@ -158,10 +454,72 @@
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response has books array\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response).to.have.property(\"books\");\r\n    pm.expect(response.books).to.be.an(\"array\");\r\n});\r\n\r\npm.test(\"Books array is not empty\", function () {\r\n    const response = pm.response.json();\r\n    pm.expect(response.books.length).to.be.above(0);\r\n});"
-            ]
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response has books array\", function () {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"books\");\r",
+              "    pm.expect(response.books).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Books array is not empty\", function () {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response.books.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "// ---- Schema validation ----\r",
+              "const booksSchema = {\r",
+              "    type: \"object\",\r",
+              "    required: [\"books\"],\r",
+              "    properties: {\r",
+              "        books: {\r",
+              "            type: \"array\",\r",
+              "            minItems: 1,\r",
+              "            items: {\r",
+              "                type: \"object\",\r",
+              "                required: [\"isbn\", \"title\", \"author\", \"publisher\", \"pages\"],\r",
+              "                properties: {\r",
+              "                    isbn:         { type: \"string\" },\r",
+              "                    title:        { type: \"string\" },\r",
+              "                    subTitle:     { type: \"string\" },\r",
+              "                    author:       { type: \"string\" },\r",
+              "                    publish_date: { type: \"string\" },\r",
+              "                    publisher:    { type: \"string\" },\r",
+              "                    pages:        { type: \"number\" },\r",
+              "                    description:  { type: \"string\" },\r",
+              "                    website:      { type: \"string\" }\r",
+              "                }\r",
+              "            }\r",
+              "        }\r",
+              "    }\r",
+              "};\r",
+              "\r",
+              "pm.test(\"Response matches the books schema\", function () {\r",
+              "    pm.response.to.have.jsonSchema(booksSchema);\r",
+              "});\r",
+              "\r",
+              "\r",
+              "pm.test(\"Content-Type is application/json\", function () {\r",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "   "
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -360,6 +718,32 @@
         }
       },
       "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "pm.test(\"Response time is under 10000 ms\", function () {\r",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);\r",
+          "});"
+        ]
+      }
     }
   ]
 }
